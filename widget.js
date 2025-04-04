@@ -1,7 +1,6 @@
 ;(async function () {
   const scriptTag = document.currentScript
-  const producerSlug = scriptTag.getAttribute('data-producer')
-  if (!producerSlug) return
+  const producerSlug = scriptTag.getAttribute('id')
 
   const defaultConfig = {
     position: 'top-right',
@@ -16,36 +15,46 @@
     const res = await fetch(`https://api.calabi.app/public/widget/${producerSlug}`)
     const json = await res.json()
     if (json && typeof json === 'object') {
-      config = { ...defaultConfig, ...json } // merge with fallback
+      config = { ...defaultConfig, ...json }
     }
   } catch (err) {
     console.warn('Calabi widget config fallback:', err)
   }
 
+  // Size map
+  const sizeMap = {
+    small: 32,
+    medium: 48,
+    large: 64,
+  }
+  const iconSize = sizeMap[config.size] || sizeMap.medium
+
   const widget = document.createElement('div')
   widget.style.position = 'fixed'
-  widget.style[config.position.includes('top') ? 'top' : 'bottom'] = '16px'
+  widget.style[config.position.startsWith('top') ? 'top' : 'bottom'] = '16px'
   widget.style.right = '16px'
   widget.style.zIndex = '9999'
   widget.style.cursor = 'pointer'
 
   const icon = document.createElement('div')
-  icon.style.width = '48px'
-  icon.style.height = '48px'
+  icon.style.width = `${iconSize}px`
+  icon.style.height = `${iconSize}px`
   icon.style.borderRadius = '9999px'
   icon.style.backgroundColor = config.color || '#00B84A'
   icon.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)'
   icon.style.display = 'flex'
   icon.style.alignItems = 'center'
   icon.style.justifyContent = 'center'
+  icon.style.transition = 'transform 0.2s ease'
+  icon.onmouseover = () => (icon.style.transform = 'scale(1.05)')
+  icon.onmouseout = () => (icon.style.transform = 'scale(1.0)')
 
-  // SVG icon element
   const svgNS = 'http://www.w3.org/2000/svg'
   const svg = document.createElementNS(svgNS, 'svg')
   svg.setAttribute('viewBox', '0 0 25 25')
   svg.setAttribute('fill', 'none')
-  svg.setAttribute('width', '24')
-  svg.setAttribute('height', '24')
+  svg.setAttribute('width', Math.round(iconSize * 0.5))
+  svg.setAttribute('height', Math.round(iconSize * 0.5))
 
   const path = document.createElementNS(svgNS, 'path')
   path.setAttribute(
